@@ -4,7 +4,8 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 # To-Do
 + ~~Compatibility with firefox~~
 + ~~Fix today's anime being displayed again after being watched~~
-+ Compatibility with Hummingbird
-+ First time login popup
-+ Option button to change login
-+ Choose episode quality in options
++ ~~Compatibility with Hummingbird~~
++ Setting page:
+	+ Select MyAnimeList/Hummingbird list
+	+ Set account settings
+	+ Select quality to download
