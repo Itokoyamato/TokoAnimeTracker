@@ -13,7 +13,7 @@ function trackAnime()
 {
 	if (settings.listSys == 'MAL')
 		getMALList(function(){trackAnimeEpisodes();});
-	else if(settings.listSys == 'hummingbird')
+	else
 		getHummingbirdList(function(){trackAnimeEpisodes();});
 }
 
@@ -93,7 +93,7 @@ function getHummingbirdList(callback)
 			currentAnime['currentEpisode'] = list[i].episodes_watched;
 			currentAnime['totalEpisodes'] = list[i].anime.episode_length;
 			currentAnime['start_date'] = list[i].anime.started_airing;
-			currentAnime['image'] = list[i].cover_image;
+			currentAnime['image'] = list[i].anime.cover_image;
 			var horribleTitle = getHorribleTitle(currentAnime);
 
 			if (horribleTitle)
@@ -125,7 +125,7 @@ function getHorribleTitle(anime)
 	var title_split = anime.title.split(' ');
 	if (settings.listSys == 'MAL')
 		var title_syns = anime.title_syn.split('; ');
-	else if (settings.listSys == 'hummingbird')
+	else
 		var title_syns = anime.title_syn.split('-');
 	// Check if complete title or synonym is found on horriblesubs
 	for (var j = 0; (j < title_syns.length && !title); j++) {
@@ -188,9 +188,9 @@ function retrieveEpisodes(anime, epCount)
 				var episodeData = {episodeID: epCount, available: false};
 				anime.episodes.push(episodeData);
 			}
-			if (retrievedAnimeCount == animeList.byIndex.length + 1){
+			var animeListLength = (settings.listSys == "MAL") ? animeList.byIndex.length + 1 : animeList.byIndex.length;
+			if (retrievedAnimeCount == animeListLength)
 				displayAnimes();
-			}
 		}
 	};
 
