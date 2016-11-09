@@ -1,17 +1,37 @@
-var MALAccount = {username: '', password: ''};
-var animeList = {byIndex: [], byName: []};
-var availableList = 0;
-var date = new Date();
+var settings = {username: '', password: '', listSys: 'MAL', quality: '1080p'};
 
+var animeList = {byIndex: [], byName: []};
 var horribleAnimeList = {byIndex: [], byName: []};
 var HorribleEpisodeCountFix = {'bungou stray dogs': 12};
 
+var date = new Date();
 var isFirefox = typeof InstallTrigger !== 'undefined';
 
 document.addEventListener('DOMContentLoaded', initializeExtension);
 
-function getAnimeList() {
+function trackAnime()
+{
+	if (settings.listSys == 'MAL')
+		getMALList(function(){trackAnimeEpisodes();});
+	else if(settings.listSys == 'hummingbird')
+		getHummingbirdList(function(){trackAnimeEpisodes();});
+}
+
+function trackAnimeEpisodes()
+{
+	animeList.byIndex.sort(function (a, b) { var time = {a: a.HorribleScheduleTime.split(':'), b: b.HorribleScheduleTime.split(':')}; return a.HorribleScheduleDay - b.HorribleScheduleDay || time.a[0] - time.b[0] || time.a[1] - time.b[1];})
+	for (var i = 0; i < animeList.byIndex.length; i++){
+		animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()] = animeList.byIndex[i];
+		animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()].index = i;
+		animeList.byIndex[i].index = i;
+		retrieveEpisodes(animeList.byIndex[i], parseInt(animeList.byIndex[i].currentEpisode), animeList.byIndex.length);
+	}
+}
+
+function getMALList(callback) {
 	var request = new XMLHttpRequest();
+	request.open("GET",  'http://myanimelist.net/malappinfo.php?u=' + settings.username + '&my_status=1&type=anime');
+	request.send();
 	request.onload = function()
 	{
 		var result = request.responseXML;
@@ -30,55 +50,17 @@ function getAnimeList() {
 			currentAnime['totalEpisodes'] = MALList[i].childNodes[4].firstChild.nodeValue;
 			currentAnime['start_date'] = MALList[i].childNodes[6].firstChild.nodeValue;
 			currentAnime['image'] = MALList[i].childNodes[8].firstChild.nodeValue;
-			var found = false;
-			var title_split = currentAnime.title.split(' ');
-			var title_syns = currentAnime.title_syn.split('; ');
-			// Check if complete title or synonym is found on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				if (horribleAnimeList.byName[currentAnime.title.toLowerCase()]) {
-					found = horribleAnimeList.byName[currentAnime.title.toLowerCase()].title;
-					break;
+
+			var horribleTitle = getHorribleTitle(currentAnime);
+			if (horribleTitle){
+				console.log('Found: ' + horribleTitle);
+				if (HorribleEpisodeCountFix[horribleTitle.toLowerCase()]){
+					currentAnime['currentEpisode'] = parseInt(currentAnime['currentEpisode']) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
+					currentAnime['totalEpisodes'] = parseInt(currentAnime['totalEpisodes']) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
 				}
-				if (horribleAnimeList.byName[title_syns[j].toLowerCase()]) {
-					found = horribleAnimeList.byName[title_syns[j].toLowerCase()].title;
-					break;
-				}
-			}
-			// Check if title or synonym is contained in a title found on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-					if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(currentAnime.title.toLowerCase()) || (title_syns[j] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syns[j].toLowerCase())) ) {
-						found = horribleAnimeList.byIndex[k].title;
-						break;
-					}
-				}
-			}
-			// Check if first word of title is found in a title on horriblesubs
-			for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-				if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_split[0].toLowerCase())) {
-					found = horribleAnimeList.byIndex[k].title;
-					break;
-				}
-			}
-			// Check if first word of synonyms is found in a title on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				var title_syn_split = title_syns[j].split(' ');
-				for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-					if (title_syn_split[0] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syn_split[0].toLowerCase())) {
-						found = horribleAnimeList.byIndex[k].title;
-						break;
-					}
-				}
-			}
-			if (found){
-				console.log('Found: ' + found);
-				if (HorribleEpisodeCountFix[found.toLowerCase()]){
-					currentAnime['currentEpisode'] = parseInt(currentAnime['currentEpisode']) + HorribleEpisodeCountFix[found.toLowerCase()];
-					currentAnime['totalEpisodes'] = parseInt(currentAnime['totalEpisodes']) + HorribleEpisodeCountFix[found.toLowerCase()];
-				}
-				currentAnime['HorribleTitle'] = found;
-				currentAnime['HorribleScheduleDay'] = horribleAnimeList.byName[found.toLowerCase()].scheduleDay;
-				currentAnime['HorribleScheduleTime'] = horribleAnimeList.byName[found.toLowerCase()].scheduleTime;
+				currentAnime['HorribleTitle'] = horribleTitle;
+				currentAnime['HorribleScheduleDay'] = horribleAnimeList.byName[horribleTitle.toLowerCase()].scheduleDay;
+				currentAnime['HorribleScheduleTime'] = horribleAnimeList.byName[horribleTitle.toLowerCase()].scheduleTime;
 				currentAnime['episodes'] = [];
 				currentAnime['index'] = animeCount;
 				animeList.byIndex[animeCount] = currentAnime;
@@ -87,28 +69,21 @@ function getAnimeList() {
 			else
 				console.log('Not found on HorribleSubs: ' + currentAnime.title);
 		}
-		animeList.byIndex.sort(function (a, b) { var time = {a: a.HorribleScheduleTime.split(':'), b: b.HorribleScheduleTime.split(':')}; return a.HorribleScheduleDay - b.HorribleScheduleDay || time.a[0] - time.b[0] || time.a[1] - time.b[1];})
-		for (var i = 0; i < animeList.byIndex.length; i++){
-			animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()] = animeList.byIndex[i];
-			animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()].index = i;
-			animeList.byIndex[i].index = i;
-			retrieveEpisode(animeList.byIndex[i], parseInt(animeList.byIndex[i].currentEpisode), animeList.byIndex.length);
-		}
+		callback();
 	};
-
-	request.open("GET",  'http://myanimelist.net/malappinfo.php?u=' + MALAccount.username + '&my_status=1&type=anime');
-	request.responseType = "document";
-	request.send();
 }
 
-function getHummingbirdAnimeList() {
+function getHummingbirdList(callback)
+{
 	var request = new XMLHttpRequest();
+	request.open("GET",  'http://hummingbird.me/api/v1/users/' + settings.username + '/library?status=currently-watching');
+	request.send();
 	request.onload = function()
 	{
 		var list = JSON.parse(request.response);
-		console.log(list);
 		var animeCount = 0;
-		for(var i = 0; i < list.length; i++) {
+		for(var i = 0; i < list.length; i++)
+		{
 			var currentAnime = {'title': '', 'id': null, 'url': null, 'currentEpisode': null, 'totalEpisodes': null, 'airing': null};
 
 			currentAnime['title'] = list[i].anime.title;
@@ -119,55 +94,19 @@ function getHummingbirdAnimeList() {
 			currentAnime['totalEpisodes'] = list[i].anime.episode_length;
 			currentAnime['start_date'] = list[i].anime.started_airing;
 			currentAnime['image'] = list[i].cover_image;
-			var found = false;
-			var title_split = currentAnime.title.split(' ');
-			var title_syns = currentAnime.title_syn.split('-');
-			// Check if complete title or synonym is found on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				if (horribleAnimeList.byName[currentAnime.title.toLowerCase()]) {
-					found = horribleAnimeList.byName[currentAnime.title.toLowerCase()].title;
-					break;
+			var horribleTitle = getHorribleTitle(currentAnime);
+
+			if (horribleTitle)
+			{
+				console.log('Found: ' + horribleTitle);
+				if (HorribleEpisodeCountFix[horribleTitle.toLowerCase()])
+				{
+					currentAnime['currentEpisode'] = parseInt(currentAnime['currentEpisode']) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
+					currentAnime['totalEpisodes'] = parseInt(currentAnime['totalEpisodes']) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
 				}
-				if (horribleAnimeList.byName[title_syns[j].toLowerCase()]) {
-					found = horribleAnimeList.byName[title_syns[j].toLowerCase()].title;
-					break;
-				}
-			}
-			// Check if title or synonym is contained in a title found on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-					if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(currentAnime.title.toLowerCase()) || (title_syns[j] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syns[j].toLowerCase())) ) {
-						found = horribleAnimeList.byIndex[k].title;
-						break;
-					}
-				}
-			}
-			// Check if first word of title is found in a title on horriblesubs
-			for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-				if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_split[0].toLowerCase())) {
-					found = horribleAnimeList.byIndex[k].title;
-					break;
-				}
-			}
-			// Check if first word of synonyms is found in a title on horriblesubs
-			for (var j = 0; (j < title_syns.length && !found); j++) {
-				var title_syn_split = title_syns[j].split(' ');
-				for (var k = 0; (k < horribleAnimeList.byIndex.length && !found); k++){
-					if (title_syn_split[0] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syn_split[0].toLowerCase())) {
-						found = horribleAnimeList.byIndex[k].title;
-						break;
-					}
-				}
-			}
-			if (found){
-				console.log('Found: ' + found);
-				if (HorribleEpisodeCountFix[found.toLowerCase()]){
-					currentAnime['currentEpisode'] = parseInt(currentAnime['currentEpisode']) + HorribleEpisodeCountFix[found.toLowerCase()];
-					currentAnime['totalEpisodes'] = parseInt(currentAnime['totalEpisodes']) + HorribleEpisodeCountFix[found.toLowerCase()];
-				}
-				currentAnime['HorribleTitle'] = found;
-				currentAnime['HorribleScheduleDay'] = horribleAnimeList.byName[found.toLowerCase()].scheduleDay;
-				currentAnime['HorribleScheduleTime'] = horribleAnimeList.byName[found.toLowerCase()].scheduleTime;
+				currentAnime['HorribleTitle'] = horribleTitle;
+				currentAnime['HorribleScheduleDay'] = horribleAnimeList.byName[horribleTitle.toLowerCase()].scheduleDay;
+				currentAnime['HorribleScheduleTime'] = horribleAnimeList.byName[horribleTitle.toLowerCase()].scheduleTime;
 				currentAnime['episodes'] = [];
 				currentAnime['index'] = animeCount;
 				animeList.byIndex[animeCount] = currentAnime;
@@ -176,20 +115,60 @@ function getHummingbirdAnimeList() {
 			else
 				console.log('Not found on HorribleSubs: ' + currentAnime.title);
 		}
-		animeList.byIndex.sort(function (a, b) { var time = {a: a.HorribleScheduleTime.split(':'), b: b.HorribleScheduleTime.split(':')}; return a.HorribleScheduleDay - b.HorribleScheduleDay || time.a[0] - time.b[0] || time.a[1] - time.b[1];})
-		for (var i = 0; i < animeList.byIndex.length; i++){
-			animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()] = animeList.byIndex[i];
-			animeList.byName[animeList.byIndex[i].HorribleTitle.toLowerCase()].index = i;
-			animeList.byIndex[i].index = i;
-			retrieveEpisode(animeList.byIndex[i], parseInt(animeList.byIndex[i].currentEpisode), animeList.byIndex.length);
-		}
+		callback();
 	};
-	request.open("GET",  'http://hummingbird.me/api/v1/users/' + MALAccount.username + '/library?status=currently-watching');
-	request.send();
+}
+
+function getHorribleTitle(anime)
+{
+	var title = false;
+	var title_split = anime.title.split(' ');
+	if (settings.listSys == 'MAL')
+		var title_syns = anime.title_syn.split('; ');
+	else if (settings.listSys == 'hummingbird')
+		var title_syns = anime.title_syn.split('-');
+	// Check if complete title or synonym is found on horriblesubs
+	for (var j = 0; (j < title_syns.length && !title); j++) {
+		if (horribleAnimeList.byName[anime.title.toLowerCase()]) {
+			title = horribleAnimeList.byName[anime.title.toLowerCase()].title;
+			break;
+		}
+		if (horribleAnimeList.byName[title_syns[j].toLowerCase()]) {
+			title = horribleAnimeList.byName[title_syns[j].toLowerCase()].title;
+			break;
+		}
+	}
+	// Check if title or synonym is contained in a title found on horriblesubs
+	for (var j = 0; (j < title_syns.length && !title); j++) {
+		for (var k = 0; (k < horribleAnimeList.byIndex.length && !title); k++){
+			if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(anime.title.toLowerCase()) || (title_syns[j] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syns[j].toLowerCase())) ) {
+				title = horribleAnimeList.byIndex[k].title;
+				break;
+			}
+		}
+	}
+	// Check if first word of title is found in a title on horriblesubs
+	for (var k = 0; (k < horribleAnimeList.byIndex.length && !title); k++){
+		if (horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_split[0].toLowerCase())) {
+			title = horribleAnimeList.byIndex[k].title;
+			break;
+		}
+	}
+	// Check if first word of synonyms is found in a title on horriblesubs
+	for (var j = 0; (j < title_syns.length && !title); j++) {
+		var title_syn_split = title_syns[j].split(' ');
+		for (var k = 0; (k < horribleAnimeList.byIndex.length && !title); k++){
+			if (title_syn_split[0] != '' && horribleAnimeList.byIndex[k].title.toLowerCase().includes(title_syn_split[0].toLowerCase())) {
+				title = horribleAnimeList.byIndex[k].title;
+				break;
+			}
+		}
+	}
+	return (title);
 }
 
 var retrievedAnimeCount = 1;
-function retrieveEpisode(anime, epCount)
+function retrieveEpisodes(anime, epCount)
 {
 	if (anime.totalEpisodes > 0 && epCount > anime.totalEpisodes)
 		return;
@@ -202,7 +181,7 @@ function retrieveEpisode(anime, epCount)
 			if (nyaaData && nyaaData.childNodes[2]){
 				var episodeData = {episodeID: epCount, available: true, data: nyaaData};
 				anime.episodes.push(episodeData);
-				retrieveEpisode(anime, epCount + 1);
+				retrieveEpisodes(anime, epCount + 1);
 			}
 			else{
 				++retrievedAnimeCount;
@@ -430,7 +409,7 @@ function incrementEpisodeCounter(anime, i)
 	var req = new XMLHttpRequest();
 	req.open("POST", 'https://myanimelist.net/includes/ajax.inc.php?t=79');
 	req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-	req.send('anime_id=' + anime.id + '&ep_val=' + epCount + "&csrf_token=" + MALAccount.csrf_token);
+	req.send('anime_id=' + anime.id + '&ep_val=' + epCount + "&csrf_token=" + settings.csrf_token);
 	req.onreadystatechange = function (e)
 					{
 						if (req.readyState == 4) {
@@ -452,7 +431,7 @@ function decrementEpisodeCounter(anime)
 	var req = new XMLHttpRequest();
 	req.open("POST", 'https://myanimelist.net/includes/ajax.inc.php?t=79');
 	req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-	req.send('anime_id=' + anime.id + '&ep_val=' + (parseInt(anime.currentEpisode) - 1) + "&csrf_token=" + MALAccount.csrf_token);
+	req.send('anime_id=' + anime.id + '&ep_val=' + (parseInt(anime.currentEpisode) - 1) + "&csrf_token=" + settings.csrf_token);
 	req.onreadystatechange = function (e)
 					{
 						if (req.readyState == 4) {
@@ -480,7 +459,7 @@ function initializeExtension()
 		buildList();
 		retrieveHorribleSubsSchedule();
 		loginToMAL();
-		getAnimeList();
+		trackAnime();
 	});
 }
 
@@ -501,8 +480,8 @@ function getChromeMALAccount(callback)
 		password: ''
 	}, function(items)
 	{
-		MALAccount.username = items.username;
-		MALAccount.password = items.password;
+		settings.username = items.username;
+		settings.password = items.password;
 		callback();
 	});
 }
@@ -513,7 +492,7 @@ function loginToMAL()
 	var csrf_token_req = new XMLHttpRequest();
 	csrf_token_req.onload = function()
 	{
-		MALAccount.csrf_token = this.response.getElementsByName("csrf_token")[0].content;
+		settings.csrf_token = this.response.getElementsByName("csrf_token")[0].content;
 	};
 
 	csrf_token_req.open("GET", 'http://myanimelist.net/login.php');
@@ -525,7 +504,7 @@ function loginToMAL()
 		var login_req = new XMLHttpRequest();
 		login_req.open("POST", 'https://myanimelist.net/login.php?from=%2F');
 		login_req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-		login_req.send('user_name=' + MALAccount.username + '&password=' + MALAccount.password + '&cookie=1&sublogin=Login&submit=1&csrf_token=' + MALAccount.csrf_token);
+		login_req.send('user_name=' + settings.username + '&password=' + settings.password + '&cookie=1&sublogin=Login&submit=1&csrf_token=' + settings.csrf_token);
 		clearInterval(loginWait);
 	}, 2000);
 }
