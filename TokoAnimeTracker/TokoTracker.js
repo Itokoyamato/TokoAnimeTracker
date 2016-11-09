@@ -239,16 +239,6 @@ function retrieveHorribleSubsSchedule()
 	request.send();
 }
 
-function displayList()
-{
-	var days = document.getElementsByClassName("daySection");
-	for (var i = 0; i < days.length; i++)
-	{
-		if (days[i].innerHTML == "")
-			days[i].classList.toggle('hide');
-	}
-}
-
 function displayAnimes()
 {
 	for (var i = 0; i < animeList.byIndex.length; i++){
@@ -323,46 +313,6 @@ function displayEpisodes(anime)
 	}
 }
 
-function addAnimeToDay(anime, day)
-{
-	var HTMLcontent = "";
-	var totalEpisodes = (anime['totalEpisodes'] == '0') ? '-' : anime['totalEpisodes'];
-	HTMLcontent += '<div class="animeSection">' + 
-							'<div class="anime" id="' + anime['id'] + '">' + 
-							'<p class="title">' + anime['title'] + '</p>' + 
-								'<p class="episodeCount">' +
-									'Episode ' + anime['currentEpisode'] + '/'+ totalEpisodes +
-								'</p>' +
-							'</div>' +
-							'<div class="animeInfo">' +
-								'<p>Lorem ipsum...</p>' +
-							'</div>' +
-							'<button id="' + anime.id + '_decrementer" class="decrement">-</button>' +
-							'<button id="' + anime.id + '_incrementer" class="increment">+</button>' +
-						'</div>';
-	document.getElementById('dayContent_' + day).innerHTML += HTMLcontent;
-
-	buttomBuildDelay[anime.id] = setInterval(function(){
-	document.getElementById(anime.id + '_incrementer').addEventListener('click', (function(anime)
-		{
-			return function() {incrementEpisodeCounter(anime);};
-		})(anime), false);
-
-	document.getElementById(anime.id + '_decrementer').addEventListener('click', (function(anime)
-		{
-			return function() {decrementEpisodeCounter(anime);};
-		})(anime), false);
-
-	document.getElementById(anime.id).addEventListener('click', (function(anime)
-		{
-			return function() {this.classList.toggle('Active');this.nextElementSibling.classList.toggle('show');};
-		})(anime), false);
-
-	clearInterval(buttomBuildDelay[anime.id]);
-	}, 2000);
-
-}
-
 var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 function buildList()
 {
@@ -426,28 +376,6 @@ function incrementEpisodeCounter(anime, i)
 					};
 }
 
-function decrementEpisodeCounter(anime)
-{
-	var req = new XMLHttpRequest();
-	req.open("POST", 'https://myanimelist.net/includes/ajax.inc.php?t=79');
-	req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-	req.send('anime_id=' + anime.id + '&ep_val=' + (parseInt(anime.currentEpisode) - 1) + "&csrf_token=" + settings.csrf_token);
-	req.onreadystatechange = function (e)
-					{
-						if (req.readyState == 4) {
-							if (req.status == 200) {
-								var totalEpisodes = (anime.totalEpisodes == '0') ? '-' : anime.totalEpisodes;
-								anime.currentEpisode--;
-								document.getElementById(anime.id).getElementsByClassName('episodeCount')[0].innerHTML = 'Episode ' + anime.currentEpisode + '/'+ totalEpisodes;
-							} else if (req.status == 400) {
-								console.log('MAL Episode increment: There was an error processing the token.')
-							} else {
-								console.log('MAL Episode increment: Something else other than 200 was returned')
-							}
-						}
-					};
-}
-
 function initializeExtension()
 {
 	console.log("Extension starting.");
@@ -455,7 +383,7 @@ function initializeExtension()
 		document.body.style.width = '460px';
 	else
 		document.body.style.width = '450px';
-	getChromeMALAccount(function(){
+	getAccount(function(){
 		buildList();
 		retrieveHorribleSubsSchedule();
 		loginToMAL();
@@ -463,7 +391,7 @@ function initializeExtension()
 	});
 }
 
-function setChromeMALAccount(login)
+function setAccount(login)
 {
 	chrome.storage.sync.set(
 	{
@@ -472,7 +400,7 @@ function setChromeMALAccount(login)
 	});
 }
 
-function getChromeMALAccount(callback)
+function getAccount(callback)
 {
 	chrome.storage.local.get(
 	{
