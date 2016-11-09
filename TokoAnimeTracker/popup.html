@@ -1,0 +1,264 @@
+<!doctype html>
+<html>
+	<head>
+	
+		<title>TokoTracker</title>
+		<style>
+			body {
+				padding: 0;
+				margin: 0;
+			}
+
+			div.anime {
+				background-color: #eee;
+				color: #444;
+				width: 450px;
+				height: 40px;
+				text-align: left;
+				transition: 0.4s;
+				border-bottom-style: solid;
+				border-color: #555555;
+				border-width: 2px;
+				transition: opacity 0.5s;
+			}
+
+			.hide {
+				height: 1px;
+				opacity: 0;
+				transition: all 0.5s;
+			}
+
+			div.anime.active, button.anime:hover {
+				background-color: #ddd;
+			}
+
+			button.watched {
+				float: left;
+				width: 20px;
+				height: inherit;
+				background-color: #666;
+				margin: 0px;
+				padding: 7px;
+				padding-left: 1px;
+				font-size: 20px;
+				color: #333;
+				text-shadow: 0px 1px 0px rgba(255,255,255,.5);
+				outline: none;
+				border: none;
+				transition: background 0.2s;
+			}
+
+			button.watched:hover {
+				cursor: pointer;
+				color: #00FF00;
+				transition: background 0.2s;
+				background-color: #777;
+			}
+
+			p.title {
+				float: left;
+				width: 300px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				font-size: 20px;
+				text-shadow: 2px 2px #000000;
+				color: #ffffff;
+				margin: 0px;
+				padding: 9px;
+			}
+
+			div.titleBackground {
+				float: left;
+				width: 380px;
+				height: inherit;
+				background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
+				background-size: 114%, 114%;
+				background-repeat: no-repeat;
+				background-position-y: -125px;
+				-webkit-animation:bounce 20s infinite;
+				-webkit-animation-timing-function: linear;
+			}
+
+			@-webkit-keyframes bounce {
+				0%			{background-position-y: -50px;}
+				50%			{background-position-y: -250px;}
+				100%		{background-position-y: -50px;}
+			}
+
+			p.episodeCount {
+				float: left;
+				width: 100px;
+				font-size: 13px;
+				text-shadow: 1px 1px #000000;
+				color: #ffffff;
+				padding-left: 6px;
+				padding-top: 11px;
+				font-size: 17px;
+				margin: 0px;
+			}
+
+			div.episodeCount {
+				float: left;
+				width: 90px;
+				height: inherit;
+				margin-left: -92px;
+				background: rgba(0,0,0,0.5);
+				border: none;
+				border-left-style: solid;
+				border-left-width: 2px;
+				border-color: #3d828b;
+
+				border-top-left-radius: 10px 100%;
+				border-bottom-left-radius: 10px 100%;
+			}
+
+			button.download {
+				float: left;
+				width: 50px;
+				height: inherit;
+				transition: background 0.2s;
+				background-color: #bbbbbb;
+				outline: none;
+				border: none;
+
+				border-left-style: solid;
+				border-left-color: #222222;
+				border-left-width: 1px;
+				border-right-style: solid;
+				border-right-color: #222222;
+				border-right-width: 1px;
+			}
+
+			button.download span:before{
+				left: 5px;
+				top: -19px;
+				width: 10px;
+				height: 10px;
+				background: #333;
+			}
+
+			button.download span:after
+			{
+				left: 0px;
+				top: -10px;
+				border-left: 10px solid transparent;
+				border-right: 10px solid transparent;
+				border-top: 10px solid #333;
+			}
+
+			button.download:hover {
+				cursor: pointer;
+				transition: background 0.2s;
+				background-color: #999999;
+			}
+
+			.download span
+			{
+				display: block;
+				cursor: pointer;
+				position: relative;
+				width: 20px;
+				height: 7px;
+				margin: auto;
+				margin-top: 17px;
+				border: 3px solid #333;
+				border-top: transparent;
+			}
+
+			.download span:before,
+			.download span:after
+			{
+				content: '';
+				display: block;
+				position: absolute;
+			}
+
+			button.download:hover span:before,
+			button.download:hover span:after
+			{
+				animation: bounceDownload .7s infinite alternate;
+			z-indexwebkit-animation: bounceDownload .7s infinite alternate;
+			}
+
+
+
+			@keyframes bounceDownload {
+				from {
+				transform: translateY(0px);
+				}
+
+				to {
+				transform: translateY(7px);
+				}
+			}
+
+			@-webkit-keyframes bounceDownload {
+				from {
+				-webkit-transform: translateY(0px);
+				}
+
+				to {
+				-webkit-transform: translateY(7px);
+				}
+			}
+
+			div.releaseTime {
+				float: left;
+				width: 70px;
+				height: inherit;
+				background-color: #666;
+			}
+
+			p.releaseTime {
+				float: left;
+				margin: 0px;
+				padding: 8px;
+				padding-left: 10px;
+				font-size: 20px;
+				font-weight: bold;
+				color: #333;
+				text-shadow: 0px 1px 0px rgba(255,255,255,.5);
+			}
+
+			div.animeInfo {
+				padding: 0 2px;
+				display: none;
+				background-color: white;
+			}
+
+			div.animeInfo.show {
+				display: block;
+			}
+
+			div.daySection {
+				display: block;
+			}
+
+			div.daySection.hide {
+				display: none;
+			}
+
+			div.dayText {
+				background-color: #444;
+				color: #eee;
+				min-width: 400px;
+				width: 100%;
+				height: 50px;
+				font-size: 20px;
+				font-family: "Tahoma";
+				border-style: solid;
+				border-color: #01b0f0;
+				border-width: 1px;
+			}
+
+			p.dayText {
+				margin: 0px;
+				padding: 12px;
+			}
+		</style>
+	</head>
+	<body>
+	</body>
+	<script src="TokoTracker.js"></script>
+</html>
