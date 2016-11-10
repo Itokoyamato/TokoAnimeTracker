@@ -516,6 +516,9 @@ function initializeExtension()
 	else
 		document.body.style.width = '450px';
 	getAccount(function(){
+		setupSettings();
+		if (settings.MALusername === '' || settings.HBusername === '')
+				document.getElementById('popup_settings').className = "popup show";
 		buildList();
 		retrieveHorribleSubsSchedule();
 		if (settings.listSys == 'MAL')
@@ -524,17 +527,14 @@ function initializeExtension()
 			loginToHummingbird();
 		trackAnime();
 	});
-	setupSettings();
-	if (settings.MALusername === '' || settings.HBusername === '')
-			document.getElementById('popup_settings').className = "popup show";
 }
 
 function getAccount(callback)
 {
 	chrome.storage.local.get(
 	{
-		listSys: '',
-		quality: '',
+		listSys: 'MAL',
+		quality: '1080',
 		MALusername: '',
 		MALpassword: '',
 		HBusername: '',
