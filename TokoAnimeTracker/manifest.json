@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "TokoTracker",
-  "description": "This extension retrieves your myanimelist watching list, tells you when episodes are aired, and if you can download them yet.",
+  "description": "An extension that retrieves your watching list from MyAnimeList/Hummingbird and displays your upcoming/available episodes on horribleSubs, allowing you to download the torrent with just a click.",
   "version": "1.0",
   "options_page": "options.html",
   "browser_action": {
@@ -17,7 +17,6 @@
   "permissions": [
     "http://myanimelist.net/",
     "https://myanimelist.net/",
-    "http://anichart.net/airing/",
     "https://www.nyaa.se/",
     "http://horriblesubs.info/",
     "http://hummingbird.me/",
