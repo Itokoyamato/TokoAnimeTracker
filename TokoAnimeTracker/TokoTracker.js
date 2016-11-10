@@ -1,4 +1,4 @@
-var settings = {username: '', password: '', listSys: 'hummingbird', quality: '1080p'};
+var settings = {MALusername: '', MALpassword: '', HBusername: '', HBpassword: '', listSys: 'hummingbird', quality: '1080'};
 
 var animeList = {byIndex: [], byName: []};
 var horribleAnimeList = {byIndex: [], byName: []};
@@ -35,7 +35,7 @@ function trackAnimeEpisodes()
 function getMALList(callback) {
 	console.log('Retrieving MAL list...');
 	var request = new XMLHttpRequest();
-	request.open("GET",  'http://myanimelist.net/malappinfo.php?u=' + settings.username + '&my_status=1&type=anime');
+	request.open("GET",  'http://myanimelist.net/malappinfo.php?u=' + settings.MALusername + '&my_status=1&type=anime');
 	request.send();
 	request.onload = function()
 	{
@@ -83,7 +83,7 @@ function getHummingbirdList(callback)
 {
 	console.log('Retrieving Hummingbird list...');
 	var request = new XMLHttpRequest();
-	request.open("GET",  'http://hummingbird.me/api/v1/users/' + settings.username + '/library?status=currently-watching');
+	request.open("GET",  'http://hummingbird.me/api/v1/users/' + settings.HBusername + '/library?status=currently-watching');
 	request.send();
 	request.onload = function()
 	{
@@ -211,7 +211,7 @@ function retrieveEpisodes(anime, epCount)
 	var count = epCount;
 	if (count < 10)
 		count = '0' + count.toString();
-	request.open("GET",  'https://www.nyaa.se/?page=rss&term=[HorribleSubs]' + anime.HorribleTitle + ' ' + count + '[1080]');
+	request.open("GET",  'https://www.nyaa.se/?page=rss&term=[HorribleSubs]' + anime.HorribleTitle + ' ' + count + '[' + settings.quality + ']');
 	request.responseType = "document";
 	request.send();
 }
@@ -259,6 +259,7 @@ function displayAnimes()
 	for (var i = 0; i < animeList.byIndex.length; i++){
 		displayEpisodes(animeList.byIndex[i]);
 	}
+	document.getElementById('content').className = "";
 }
 
 var intervals = [];
@@ -333,6 +334,7 @@ function buildList()
 	var HTMLContent = 	'<div class="daySection" id="daySection_-1">' +
 							'<div class="dayText">' +
 								'<p class="dayText">Available</p>' +
+								'<button id="settings" class="settings"><p class="settings">&#9881;</p></button>' +
 							'</div>' +
 							'<div class="dayContent" id="dayContent_-1">' +
 							'</div>' + 
@@ -362,7 +364,7 @@ function buildList()
 							'</div>' + 
 						'</div>';
 	}
-	document.body.innerHTML += HTMLContent;
+	document.getElementById('content').innerHTML += HTMLContent;
 }
 
 function incrementEpisodeCounter(anime, i)
@@ -387,7 +389,7 @@ function setMALEpisodeCount(anime, i, epCount)
 			if (req.readyState == 4) {
 				if (req.status == 200) {
 					animeList.byName[anime.HorribleTitle.toLowerCase()].currentEpisode++;
-					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hide";
+					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
 					intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide'] = setInterval(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();clearInterval(intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide']);}, 500);
 				} else if (req.status == 400) {
 					console.log('MAL Episode increment: There was an error processing the token.');
@@ -409,7 +411,7 @@ function setHummingbirdEpisodeCount(anime, i, epCount)
 			if (req.readyState == 4) {
 				if (req.status == 201) {
 					animeList.byName[anime.HorribleTitle.toLowerCase()].currentEpisode++;
-					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hide";
+					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
 					intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide'] = setInterval(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();clearInterval(intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide']);}, 500);
 				} else if (req.status == 401) {
 					console.log('Hummingbird Episode increment: Access unauthorized.');
@@ -419,6 +421,91 @@ function setHummingbirdEpisodeCount(anime, i, epCount)
 				}
 			}
 		};
+}
+
+var qualitySelected = "1080";
+var listSysSelected = "MAL";
+function setupSettings()
+{
+	setTimeout(function()
+	{
+		document.getElementById('MALusername').value = settings.MALusername;
+		document.getElementById('MALpassword').value = settings.MALpassword;
+		document.getElementById('HBusername').value = settings.HBusername;
+		document.getElementById('HBpassword').value = settings.HBpassword;
+		document.getElementById('quality' + settings.quality).className = "quality p" + settings.quality + " qualitySelected";
+		if (settings.listSys == "MAL"){
+			document.getElementById('listSysMAL').className = "listSys listSysMAL listSysSelected";
+			document.getElementById('listSysHB').className = "listSys listSysHB";
+		}
+		else{
+			document.getElementById('listSysHB').className = "listSys listSysHB listSysSelected";
+			document.getElementById('listSysMAL').className = "listSys listSysMAL";
+		}
+		document.getElementById('listSysMAL').addEventListener('click', function()
+			{
+				listSysSelected = 'MAL';
+				document.getElementById('listSysMAL').className = "listSys listSysMAL listSysSelected";
+				document.getElementById('listSysHB').className = "listSys listSysHB";
+			}, false);
+		document.getElementById('listSysHB').addEventListener('click', function()
+			{
+				listSysSelected = 'hummingbird';
+				document.getElementById('listSysMAL').className = "listSys listSysMAL";
+				document.getElementById('listSysHB').className = "listSys listSysHB listSysSelected";
+			}, false);
+		document.getElementById('quality480').addEventListener('click', function()
+			{
+				qualitySelected = '480';
+				document.getElementById('quality480').className = "quality p480 qualitySelected";
+				document.getElementById('quality720').className = "quality p720 ";
+				document.getElementById('quality1080').className = "quality p1080";
+			}, false);
+		document.getElementById('quality720').addEventListener('click', function()
+			{
+				qualitySelected = '720';
+				document.getElementById('quality480').className = "quality p480";
+				document.getElementById('quality720').className = "quality p720 qualitySelected";
+				document.getElementById('quality1080').className = "quality p1080";
+			}, false);
+		document.getElementById('quality1080').addEventListener('click', function()
+			{
+				qualitySelected = '1080';
+				document.getElementById('quality480').className = "quality p480";
+				document.getElementById('quality720').className = "quality p720 ";
+				document.getElementById('quality1080').className = "quality p1080 qualitySelected";
+			}, false);
+		document.getElementById('save').addEventListener('click', function()
+			{
+				document.getElementById('popup_settings').className = "popup hide";
+				document.getElementById('content').className = "";
+				saveSettings();
+			}, false);
+		document.getElementById('settings').addEventListener('click', function()
+			{
+				document.getElementById('popup_settings').className = "popup show";
+				document.getElementById('content').className = "blur";
+			}, false);
+	}, 1000);
+}
+
+function saveSettings()
+{
+	settings.quality = qualitySelected;
+	settings.listSys = listSysSelected;
+	settings.MALusername = document.getElementById('MALusername').value;
+	settings.MALpassword = document.getElementById('MALpassword').value;
+	settings.HBusername = document.getElementById('HBusername').value;
+	settings.HBpassword = document.getElementById('HBpassword').value;
+	chrome.storage.local.set(
+	{
+		listSys: settings.listSys,
+		quality: settings.quality,
+		MALusername: settings.MALusername,
+		MALpassword: settings.MALpassword,
+		HBusername: settings.HBusername,
+		HBpassword: settings.HBpassword
+	});
 }
 
 function initializeExtension()
@@ -437,27 +524,29 @@ function initializeExtension()
 			loginToHummingbird();
 		trackAnime();
 	});
+	setupSettings();
+	if (settings.MALusername === '' || settings.HBusername === '')
+			document.getElementById('popup_settings').className = "popup show";
 }
-
-// function setAccount(login)
-// {
-// 	chrome.storage.sync.set(
-// 	{
-// 		username: login.username,
-// 		password: login.password
-// 	});
-// }
 
 function getAccount(callback)
 {
 	chrome.storage.local.get(
 	{
-		username: '',
-		password: ''
+		listSys: '',
+		quality: '',
+		MALusername: '',
+		MALpassword: '',
+		HBusername: '',
+		HBpassword: ''
 	}, function(items)
 	{
-		settings.username = items.username;
-		settings.password = items.password;
+		settings.listSys = items.listSys;
+		settings.quality = items.quality;
+		settings.MALusername = items.MALusername;
+		settings.MALpassword = items.MALpassword;
+		settings.HBusername = items.HBusername;
+		settings.HBpassword = items.HBpassword;
 		callback();
 	});
 }
@@ -483,7 +572,7 @@ function loginToMAL()
 		var login_req = new XMLHttpRequest();
 		login_req.open("POST", 'https://myanimelist.net/login.php?from=%2F');
 		login_req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-		login_req.send('user_name=' + settings.username + '&password=' + settings.password + '&cookie=1&sublogin=Login&submit=1&csrf_token=' + settings.token);
+		login_req.send('user_name=' + settings.MALusername + '&password=' + settings.MALpassword + '&cookie=1&sublogin=Login&submit=1&csrf_token=' + settings.token);
 		clearInterval(intervals.loginWait);
 		login_req.onreadystatechange = function ()
 			{
@@ -510,7 +599,7 @@ function loginToHummingbird()
 	var login_req = new XMLHttpRequest();
 	login_req.open("POST", 'http://hummingbird.me/api/v1/users/authenticate');
 	login_req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
-	login_req.send('username=' + settings.username + '&password=' + settings.password);
+	login_req.send('username=' + settings.HBusername + '&password=' + settings.HBpassword);
 	login_req.onreadystatechange = function ()
 		{
 			if (login_req.readyState == 4) {

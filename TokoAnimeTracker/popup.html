@@ -7,6 +7,8 @@
 			body {
 				padding: 0;
 				margin: 0;
+				background-color: #000;
+				min-height: 600px;
 			}
 
 			div.anime {
@@ -22,7 +24,7 @@
 				transition: opacity 0.5s;
 			}
 
-			.hide {
+			.hideAnime {
 				height: 1px;
 				opacity: 0;
 				transition: all 0.5s;
@@ -253,12 +255,303 @@
 			}
 
 			p.dayText {
+				float: left;
+				width: 200px;
 				margin: 0px;
 				padding: 12px;
 			}
+
+			div.popup {
+				top: 0px;
+				position: absolute;
+				height: 500px;
+				width: 350px;
+				margin-left: 30px;
+				margin-top: 30px;
+				background-color: rgba(200,200,200,0.8);
+
+				border-radius: 5px;
+				padding: 20px;
+			}
+
+			.blur {
+				-webkit-filter: blur(4px);
+				-moz-filter: blur(4px);
+				-ms-filter: blur(4px);
+				-o-filter: blur(4px);
+				filter: blur(4px);
+			}
+
+			p.popupTitle {
+				font-weight: bold;
+				font-size: 25px;
+				text-align: center;
+				text-shadow: 1px 2px #000000;
+				color: #ffffff;
+				border-bottom-style: solid;
+				border-bottom-width: 2px;
+				border-color: #333;
+				height: 50px;
+			}
+
+			p.settingTitle {
+				font-weight: bold;
+				font-size: 17px;
+				text-shadow: 0px 1px #eee;
+				color: #464646;
+			}
+
+			p.account {
+				margin: 0;
+			}
+
+			div.credentials {
+				width: 175px;
+				height: 70px;
+				float: left;
+			}
+
+			input.credentials {
+				float: left;
+			}
+
+			button.quality {
+				height: 30px;
+				width: 50px;
+				background-color: #eee;
+				float: left;
+				transition: background 0.2s;
+				border: none;
+				padding: 0px;
+				outline: none;
+			}
+
+			button.qualitySelected {
+				background-color: #01b0f0;
+			}
+
+			button.p480 {
+				border-top-left-radius: 15px 100%;
+				border-bottom-left-radius: 15px 100%;
+			}
+
+			button.p720 {
+				border: none;
+
+				border-left-style: solid;
+				border-left-color: #777;
+				border-left-width: 2px;
+				border-right-style: solid;
+				border-right-color: #777;
+				border-right-width: 2px;
+			}
+
+			button.p1080 {
+				border-top-right-radius: 15px 100%;
+				border-bottom-right-radius: 15px 100%;
+			}
+
+			p.quality {
+				text-align: center;
+				font-weight: bold;
+				font-size: 14px;
+				margin: 0px;
+				color: #333;
+			}
+
+			button.quality:hover {
+				background-color: #ccc;
+				transition: background 0.2s;
+			}
+
+			button.quality:active {
+				background-color: #aaa;
+				transition: background 0.2s;
+			}
+
+			button.qualitySelected:hover {
+				background-color: #0094ff;
+				transition: background 0.2s;
+			}
+
+			button.qualitySelected:active {
+				background-color: #0048bc;
+				transition: background 0.2s;
+			}
+
+			p.listSys {
+				text-align: center;
+				font-weight: bold;
+				font-size: 14px;
+				margin: 0px;
+				color: #333;
+			}
+
+			button.listSys {
+				height: 30px;
+				width: 120px;
+				background-color: #eee;
+				float: left;
+				transition: background 0.2s;
+				border: none;
+				padding: 0px;
+				outline: none;
+			}
+
+			button.listSysSelected {
+				background-color: #01b0f0;
+			}
+
+			button.listSys:hover {
+				background-color: #ccc;
+				transition: background 0.2s;
+			}
+
+			button.listSys:active {
+				background-color: #aaa;
+				transition: background 0.2s;
+			}
+
+			button.listSysSelected:hover {
+				background-color: #0094ff;
+				transition: background 0.2s;
+			}
+
+			button.listSysSelected:active {
+				background-color: #0048bc;
+				transition: background 0.2s;
+			}
+
+			button.listSysMAL {
+				border: none;
+
+				border-right-style: solid;
+				border-right-color: #777;
+				border-right-width: 1px;
+				border-top-left-radius: 15px 100%;
+				border-bottom-left-radius: 15px 100%;
+			}
+
+			button.listSysHB {
+				border: none;
+
+				border-left-style: solid;
+				border-left-color: #777;
+				border-left-width: 1px;
+				border-top-right-radius: 15px 100%;
+				border-bottom-right-radius: 15px 100%;
+			}
+
+			button.save {
+				height: 30px;
+				width: 100px;
+				background-color: #eee;
+				float: right;
+				transition: background 0.2s;
+				border: none;
+				padding: 0px;
+				outline: none;
+				border-radius: 10px;
+				font-weight: bold;
+				font-size: 15px;
+				margin-right: 20px;
+			}
+
+			button.save:hover {
+				background-color: #ccc;
+				transition: background 0.2s;
+			}
+
+			button.save:active {
+				background-color: #aaa;
+				transition: background 0.2s;
+			}
+
+			:target {
+				color: red;
+			}
+
+			button.settings {
+				height: 20px;
+				width: 20px;
+				float: right;
+				background-color: rgba(255,255,255,0);
+				transition: background 0.2s;
+				border: none;
+				padding: 0px;
+				outline: none;
+				border-radius: 10px;
+				font-weight: bold;
+				font-size: 15px;
+				text-align: center;
+				margin-top: 14px;
+				margin-right: 20px;
+			}
+
+			button.settings:hover {
+				background-color: rgba(255,255,255,0.4);
+				cursor: pointer;
+			}
+
+			button.settings:active {
+				background-color: rgba(30,30,30,0.4);
+				cursor: pointer;
+			}
+
+			p.settings {
+				margin: 0px;
+				margin-top: -2px;
+				margin-left: -4.25px;
+			}
+
+			.hide {
+				opacity: 0;
+				z-index: -1;
+				transition: all 0.2s;
+			}
+
+			.show {
+				opacity: 1;
+				z-index: 1;
+				transition: all 0.2s;
+			}
+
 		</style>
 	</head>
 	<body>
+		<div id="content" class="blur">
+		</div>
+		<div id="popup_settings" class="popup hide">
+			<p class="popupTitle">Settings</p>
+			<p class="settingTitle">MyAnimeList Account:</p>
+			<div class="credentials">
+				<p class="account">Username:</p>
+				<input type="text" id="MALusername" class="credentials">
+			</div>
+			<div class="credentials">
+				<p class="account">Password:</p>
+				<input type="password" id="MALpassword" class="credentials">
+			</div>
+			<p class="settingTitle">Hummingbird Account:</p>
+			<div class="credentials">
+				<p class="account">Username:</p>
+				<input type="text" id="HBusername" class="credentials">
+			</div>
+			<div class="credentials">
+				<p class="account">Password:</p>
+				<input type="password" id="HBpassword" class="credentials">
+			</div>
+			<p class="settingTitle">Use anime list from:</p>
+			<button id="listSysMAL" class="listSys listSysMAL"><p class="listSys">MyAnimeList</p></button>
+			<button id="listSysHB" class="listSys listSysHB"><p class="listSys">Hummingbird</p></button>
+			<br><br>
+			<p class="settingTitle">Episode quality:</p>
+			<button id="quality480" class="quality p480"><p class="quality">480p</p></button>
+			<button id="quality720" class="quality p720"><p class="quality">720p</p></button>
+			<button id="quality1080" class="quality p1080"><p class="quality">1080p</p></button>
+			<button id="save" class="save">Save</button>
+		</div>
 	</body>
+	<script src="jquery.js"></script>
 	<script src="TokoTracker.js"></script>
 </html>
