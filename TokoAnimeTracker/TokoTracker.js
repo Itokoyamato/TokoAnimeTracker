@@ -441,6 +441,10 @@ var qualitySelected = "1080";
 var listSysSelected = "MAL";
 function setupSettings()
 {
+	if (settings.listSys == '')
+		settings.listSys = "MAL";
+	if (settings.quality == '')
+		settings.quality = "1080";
 	setTimeout(function()
 	{
 		document.getElementById('MALusername').value = settings.MALusername;
@@ -500,7 +504,7 @@ function setupSettings()
 				document.getElementById('popup_settings').className = "popup show";
 				document.getElementById('content').className = "blur";
 			}, false);
-	}, 1000);
+	}, 500);
 }
 
 function saveSettings()
