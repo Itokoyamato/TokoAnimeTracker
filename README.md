@@ -11,8 +11,7 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 	+ ~~Select quality to download~~
 + ~~Fix settings not working on firefox~~
 + ~~Recode the retrieveEpisodes function to avoid matching episodes 08 with [1080] and reduce heavily the amount of requests to nyaa.se~~
-+ ~~Make it so it reloads when settings are saved~~
-+ Polish a few things
++ ~~Reload when settings are saved~~
 + Info window:
 	+ List of animes found/not found on horriblesubs on first load
 	+ Cloudflare protection on horriblesubs: if access denied, propose user to open page in a tab
@@ -20,3 +19,4 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 	+ Display basic anime info and user progress on said anime
 	+ Allow user to easily edit his list
 	+ Allow user to apply title/episodecount fix manually
++ Polish a few things and work around as many request errors as possible
