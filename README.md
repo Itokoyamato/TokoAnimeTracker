@@ -13,3 +13,10 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 + ~~Recode the retrieveEpisodes function to avoid matching episodes 08 with [1080]~~
 + ~~Make it so it reloads when settings are saved~~
 + Polish a few things
++ Info window:
+	+ List of animes found/not found on horriblesubs on first load
+	+ Cloudflare protection on horriblesubs: if access denied, propose user to open page in a tab
++ Anime info section
+	+ Display basic anime info and user progress on said anime
+	+ Allow user to easily edit his list
+	+ Allow user to apply title/episodecount fix manually
