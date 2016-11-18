@@ -188,23 +188,32 @@ function retrieveEpisodes(anime, epCount)
 		var result = request.responseXML;
 		if (result){
 			var nyaaData = result.childNodes[0].childNodes[0];
-			for (var i = 4; i < nyaaData.children.length + 1; i++)
+			var foundEpisode = false;
+			for (var i = anime.currentEpisode; 1; i++)
 			{
-				var nyaaEpisode = nyaaData.childNodes[i];
-				if (!nyaaEpisode)
+				foundEpisode = false;
+				for (var j = 4; j < nyaaData.children.length + 1; j++)
+				{
+					var nyaaEpisode = nyaaData.childNodes[j];
+					var count = (i < 10) ? '0' + i.toString() : i;
+					var search = anime.HorribleTitle + ' - ' + count;
+					if (nyaaEpisode)
+					{
+						if (nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
+						{
+							episodeData = {episodeID: i, available: true, data: nyaaEpisode};
+							anime.episodes.push(episodeData);
+							foundEpisode = true;
+							break;
+						}
+					}
+				}
+				if (!foundEpisode)
 				{
 					++retrievedAnimeCount;
-					episodeData = {episodeID: epCount, available: false};
+					episodeData = {episodeID: i, available: false};
 					anime.episodes.push(episodeData);
 					break;
-				}
-				var count = (epCount < 10) ? '0' + epCount.toString() : epCount;
-				var search = anime.HorribleTitle + ' - ' + count;
-				if (nyaaData && nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
-				{
-					episodeData = {episodeID: epCount, available: true, data: nyaaData};
-					anime.episodes.push(episodeData);
-					epCount++;
 				}
 			}
 			var animeListLength = (settings.listSys == "MAL") ? animeList.byIndex.length + 1 : animeList.byIndex.length;
@@ -273,6 +282,8 @@ function displayEpisodes(anime)
 		return a.episodeID - b.episodeID;
 	});
 	for (var i = 1; i < anime.episodes.length; i++){
+		if (anime.episodes[i].episodeID <= anime.currentEpisode)
+			continue;
 		var downloadOrTime = '<div class="releaseTime"><p class="releaseTime">' + anime.HorribleScheduleTime + '</p></div>';
 		var watchedButton = '';
 		if (anime.episodes[i].available){
@@ -509,6 +520,18 @@ function saveSettings()
 		HBusername: settings.HBusername,
 		HBpassword: settings.HBpassword
 	});
+	document.getElementById('content').innerHTML = '';
+	animeList = {byIndex: [], byName: []};
+	horribleAnimeList = {byIndex: [], byName: []};
+	retrievedAnimeCount = 1;
+	setupSettings();
+	buildList();
+	retrieveHorribleSubsSchedule();
+	if (settings.listSys == 'MAL')
+		loginToMAL();
+	else
+		loginToHummingbird();
+	trackAnime();
 }
 
 function initializeExtension()
@@ -519,10 +542,10 @@ function initializeExtension()
 	else
 		document.body.style.width = '450px';
 	getAccount(function(){
-		setupSettings();
 		if (settings.MALusername === '' && settings.HBusername === '')
 				document.getElementById('popup_settings').className = "popup show";
 		buildList();
+		setupSettings();
 		retrieveHorribleSubsSchedule();
 		if (settings.listSys == 'MAL')
 			loginToMAL();
@@ -536,8 +559,8 @@ function getAccount(callback)
 {
 	chrome.storage.local.get(
 	{
-		listSys: 'MAL',
-		quality: '1080',
+		listSys: '',
+		quality: '',
 		MALusername: '',
 		MALpassword: '',
 		HBusername: '',
