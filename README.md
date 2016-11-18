@@ -10,5 +10,6 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 	+ ~~Set account settings~~
 	+ ~~Select quality to download~~
 + ~~Settings does not work on firefox~~
++ ~~Remake the retrieveEpisodes function to avoid matching episodes 08 with [1080]~~
 + Make it so it reloads when settings are saved
 + Polish a few things

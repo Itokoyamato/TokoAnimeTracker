@@ -181,24 +181,31 @@ function getHorribleTitle(anime)
 var retrievedAnimeCount = 1;
 function retrieveEpisodes(anime, epCount)
 {
-	if (anime.totalEpisodes > 0 && epCount > anime.totalEpisodes)
-		return;
 	var request = new XMLHttpRequest();
 	var episodeData;
 	request.onload = function()
 	{
 		var result = request.responseXML;
 		if (result){
-			var nyaaData = result.childNodes[0].childNodes[0].childNodes[4];
-			if (nyaaData && nyaaData.childNodes[2]){
-				episodeData = {episodeID: epCount, available: true, data: nyaaData};
-				anime.episodes.push(episodeData);
-				retrieveEpisodes(anime, epCount + 1);
-			}
-			else{
-				++retrievedAnimeCount;
-				episodeData = {episodeID: epCount, available: false};
-				anime.episodes.push(episodeData);
+			var nyaaData = result.childNodes[0].childNodes[0];
+			for (var i = 4; i < nyaaData.children.length + 1; i++)
+			{
+				var nyaaEpisode = nyaaData.childNodes[i];
+				if (!nyaaEpisode)
+				{
+					++retrievedAnimeCount;
+					episodeData = {episodeID: epCount, available: false};
+					anime.episodes.push(episodeData);
+					break;
+				}
+				var count = (epCount < 10) ? '0' + epCount.toString() : epCount;
+				var search = anime.HorribleTitle + ' - ' + count;
+				if (nyaaData && nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
+				{
+					episodeData = {episodeID: epCount, available: true, data: nyaaData};
+					anime.episodes.push(episodeData);
+					epCount++;
+				}
 			}
 			var animeListLength = (settings.listSys == "MAL") ? animeList.byIndex.length + 1 : animeList.byIndex.length;
 			if (retrievedAnimeCount == animeListLength){
@@ -208,11 +215,7 @@ function retrieveEpisodes(anime, epCount)
 		}
 	};
 
-	var count = epCount;
-	if (count < 10)
-		count = '0' + count.toString();
-	request.open("GET",  'https://www.nyaa.se/?page=rss&term=[HorribleSubs]' + anime.HorribleTitle + ' ' + count + '[' + settings.quality + ']');
-	request.responseType = "document";
+	request.open("GET",  'https://www.nyaa.se/?page=rss&term=[HorribleSubs]' + anime.HorribleTitle + '[' + settings.quality + ']');
 	request.send();
 }
 
@@ -517,7 +520,7 @@ function initializeExtension()
 		document.body.style.width = '450px';
 	getAccount(function(){
 		setupSettings();
-		if (settings.MALusername === '' || settings.HBusername === '')
+		if (settings.MALusername === '' && settings.HBusername === '')
 				document.getElementById('popup_settings').className = "popup show";
 		buildList();
 		retrieveHorribleSubsSchedule();
