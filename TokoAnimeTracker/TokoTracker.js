@@ -49,7 +49,8 @@ function getMALList(callback) {
 			var currentAnime = {'title': '', 'id': null, 'url': null, 'currentEpisode': null, 'totalEpisodes': null, 'airing': null};
 
 			currentAnime.title = MALList[i].childNodes[1].firstChild.nodeValue;
-			currentAnime.title_syn = MALList[i].childNodes[2].firstChild.nodeValue;
+			console.log(currentAnime.title);
+			currentAnime.title_syn = (MALList[i].childNodes[2].firstChild) ? MALList[i].childNodes[2].firstChild.nodeValue : "";
 			currentAnime.id = MALList[i].childNodes[0].firstChild.nodeValue;
 			currentAnime.url = 'http://myanimelist.net/anime/' + MALList[i].childNodes[0].firstChild.nodeValue;
 			currentAnime.currentEpisode = MALList[i].childNodes[10].firstChild.nodeValue;
