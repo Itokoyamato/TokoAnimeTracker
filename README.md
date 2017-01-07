@@ -13,6 +13,7 @@ An extension that retrieves your watching list from MyAnimeList/Hummingbird and 
 + ~~Recode the retrieveEpisodes function to avoid matching episodes 08 with [1080] and reduce heavily the amount of requests to nyaa.se~~
 + ~~Reload when settings are saved~~
 + ~~Fix first episode not being displayed~~
+
 # To-Do
 + Info popup:
 	+ List of animes found/not found on horriblesubs on first load
