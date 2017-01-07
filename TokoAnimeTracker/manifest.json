@@ -4,7 +4,6 @@
   "name": "TokoTracker",
   "description": "An extension that retrieves your watching list from MyAnimeList/Hummingbird and displays your upcoming/available episodes on horribleSubs, allowing you to download the torrent with just a click.",
   "version": "1.0",
-  "options_page": "options.html",
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
@@ -14,10 +13,6 @@
     "gecko": {
       "id": "my-extension@example.com"
     }
-  },
-
-  "options_ui": {
-    "page": "options.html"
   },
 
   "permissions": [

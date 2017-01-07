@@ -158,6 +158,17 @@ function getHorribleTitle(anime)
 			}
 		}
 	}
+	for (i = 0; (i < title_syns.length && !title); i++) {
+		for (j = 0; (j < horribleAnimeList.byIndex.length && !title); j++){
+			var title_split_dd = anime.title.toLowerCase().split(':');
+			var title_syn_split_dd = title_syns[i].toLowerCase().split(':');
+
+			if (horribleAnimeList.byIndex[j].title.toLowerCase().includes(title_split_dd[0]) || (title_syn_split_dd[0] !== '' && horribleAnimeList.byIndex[j].title.toLowerCase().includes(title_syns[i].toLowerCase())) ) {
+				title = horribleAnimeList.byIndex[j].title;
+				break;
+			}
+		}
+	}
 	// Check if first word of title is found in a title on horriblesubs
 	for (i = 0; (i < horribleAnimeList.byIndex.length && !title); i++){
 		if (horribleAnimeList.byIndex[i].title.toLowerCase().includes(title_split[0].toLowerCase())) {
@@ -191,12 +202,14 @@ function retrieveEpisodes(anime, epCount)
 			var foundEpisode = false;
 			for (var i = anime.currentEpisode; 1; i++)
 			{
+				if (i == 0)
+					continue;
 				foundEpisode = false;
 				for (var j = 4; j < nyaaData.children.length + 1; j++)
 				{
 					var nyaaEpisode = nyaaData.childNodes[j];
 					var count = (i < 10) ? '0' + i.toString() : i;
-					var search = anime.HorribleTitle + ' - ' + count;
+					var search = ' - ' + count;
 					if (nyaaEpisode)
 					{
 						if (nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
@@ -242,7 +255,7 @@ function retrieveHorribleSubsSchedule()
 			for (var j = 0; j < daySchedule.length; j++) {
 				var day = i + 1;
 				var time = daySchedule[j].nextElementSibling.innerHTML.split(':');
-				var fixedTime = [(parseInt(time[0])+8),time[1]];
+				var fixedTime = [(parseInt(time[0])+9),time[1]];
 				if (fixedTime[0] >= 24){
 					fixedTime[0] = fixedTime[0] - 24;
 					day++;
@@ -254,6 +267,28 @@ function retrieveHorribleSubsSchedule()
 				if (day > 6)
 					day = 0;
 				var animeData = {title: daySchedule[j].firstChild.innerHTML, scheduleDay: day, scheduleTime: fixedTime[0] + ':' + fixedTime[1]};
+				horribleAnimeList.byIndex[animeCount] = animeData;
+				horribleAnimeList.byName[animeData.title.toLowerCase()] = animeData;
+				animeCount++;
+			}
+		}
+		for (var i = 0; i < 7; i++) {
+			var daySchedule = weekSchedule[i].nextElementSibling.getElementsByClassName('schedule-show');
+			for (var j = 0; j < daySchedule.length; j++) {
+				var day = i + 1;
+				var time = daySchedule[j].nextElementSibling.innerHTML.split(':');
+				var fixedTime = [(parseInt(time[0])+8),time[1]];
+				if (fixedTime[0] >= 24){
+					fixedTime[0] = fixedTime[0] - 24;
+					day++;
+				}
+				if (fixedTime[0].toString().length == 1)
+					fixedTime[0] = '0' + fixedTime[0].toString();
+				if (day < 0)
+					day = 6 - (day-7);
+				if (day > 6)
+					day = 0;
+				var animeData = {title: daySchedule[j].innerHTML, scheduleDay: day, scheduleTime: fixedTime[0] + ':' + fixedTime[1]};
 				horribleAnimeList.byIndex[animeCount] = animeData;
 				horribleAnimeList.byName[animeData.title.toLowerCase()] = animeData;
 				animeCount++;
@@ -274,14 +309,13 @@ function displayAnimes()
 	document.getElementById('content').className = "";
 }
 
-var intervals = [];
 function displayEpisodes(anime)
 {
 	anime.episodes.sort(
 	function(a, b) {
 		return a.episodeID - b.episodeID;
 	});
-	for (var i = 1; i < anime.episodes.length; i++){
+	for (var i = 0; i < anime.episodes.length; i++){
 		if (anime.episodes[i].episodeID <= anime.currentEpisode)
 			continue;
 		var downloadOrTime = '<div class="releaseTime"><p class="releaseTime">' + anime.HorribleScheduleTime + '</p></div>';
@@ -311,13 +345,13 @@ function displayEpisodes(anime)
 		if (anime.episodes[i].available){
 			document.getElementById('dayContent_-1').innerHTML += HTMLcontent;
 
-			intervals[anime.id + '_' + anime.episodes[i].episodeID] = setInterval(function(anime, i){
+			setTimeout(function(anime, i){
 				document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_download').addEventListener('click', (function(anime, i)
 					{
 						return function() {
 							var downloadURL = anime.episodes[i].data.childNodes[2].firstChild.nodeValue + '&magnet=1';
 							chrome.tabs.create({url: downloadURL, active: false});
-							chrome.tabs.query({'url': downloadURL}, function(tab){var delay = setInterval(function(){chrome.tabs.remove(tab[0].id);clearInterval(intervals[delay]);}, 500);intervals[delay] = delay;});
+							chrome.tabs.query({'url': downloadURL}, function(tab){setTimeout(function(){chrome.tabs.remove(tab[0].id);}, 700);});
 						};
 					})(anime, i), false);
 
@@ -325,7 +359,6 @@ function displayEpisodes(anime)
 					{
 						return function() {incrementEpisodeCounter(anime, i);};
 					})(anime, i), false);
-				clearInterval(intervals[anime.id + '_' + anime.episodes[i].episodeID]);
 			}, 1000, anime, i);
 		}
 		else
@@ -404,7 +437,7 @@ function setMALEpisodeCount(anime, i, epCount)
 				if (req.status == 200) {
 					animeList.byName[anime.HorribleTitle.toLowerCase()].currentEpisode++;
 					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
-					intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide'] = setInterval(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();clearInterval(intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide']);}, 500);
+					setTimeout(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();}, 500);
 				} else if (req.status == 400) {
 					console.log('MAL Episode increment: There was an error processing the token.');
 				} else {
@@ -426,7 +459,7 @@ function setHummingbirdEpisodeCount(anime, i, epCount)
 				if (req.status == 201) {
 					animeList.byName[anime.HorribleTitle.toLowerCase()].currentEpisode++;
 					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
-					intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide'] = setInterval(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();clearInterval(intervals[anime.id + '_' + anime.episodes[i].episodeID + '_hide']);}, 500);
+					setTimeout(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();}, 500);
 				} else if (req.status == 401) {
 					console.log('Hummingbird Episode increment: Access unauthorized.');
 				} else {
@@ -520,9 +553,9 @@ function saveSettings()
 		listSys: settings.listSys,
 		quality: settings.quality,
 		MALusername: settings.MALusername,
-		MALpassword: settings.MALpassword,
+		MALpassword: btoa(settings.MALpassword),
 		HBusername: settings.HBusername,
-		HBpassword: settings.HBpassword
+		HBpassword: btoa(settings.HBpassword)
 	});
 	document.getElementById('content').innerHTML = '';
 	animeList = {byIndex: [], byName: []};
@@ -574,9 +607,9 @@ function getAccount(callback)
 		settings.listSys = items.listSys;
 		settings.quality = items.quality;
 		settings.MALusername = items.MALusername;
-		settings.MALpassword = items.MALpassword;
+		settings.MALpassword = atob(items.MALpassword);
 		settings.HBusername = items.HBusername;
-		settings.HBpassword = items.HBpassword;
+		settings.HBpassword = atob(items.HBpassword);
 		callback();
 	});
 }
@@ -597,13 +630,12 @@ function loginToMAL()
 	csrf_token_req.responseType = "document";
 	csrf_token_req.send();
 
-	intervals.loginWait = setInterval(function()
+	setTimeout(function()
 	{
 		var login_req = new XMLHttpRequest();
 		login_req.open("POST", 'https://myanimelist.net/login.php?from=%2F');
 		login_req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
 		login_req.send('user_name=' + settings.MALusername + '&password=' + settings.MALpassword + '&cookie=1&sublogin=Login&submit=1&csrf_token=' + settings.token);
-		clearInterval(intervals.loginWait);
 		login_req.onreadystatechange = function ()
 			{
 				if (login_req.readyState == 4) {
