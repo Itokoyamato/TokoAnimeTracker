@@ -2,7 +2,12 @@ var settings = {MALusername: '', MALpassword: '', HBusername: '', HBpassword: ''
 
 var animeList = {byIndex: [], byName: []};
 var horribleAnimeList = {byIndex: [], byName: []};
-var HorribleEpisodeCountFix = {'bungou stray dogs': 12};
+var HorribleEpisodeCountFix = {
+	'bungou stray dogs': 12,
+	'rewrite': 13,
+	'nanbaka': 13,
+	'tales of zestiria the x': 13
+};
 
 var date = new Date();
 var isFirefox = typeof InstallTrigger !== 'undefined';
@@ -49,7 +54,6 @@ function getMALList(callback) {
 			var currentAnime = {'title': '', 'id': null, 'url': null, 'currentEpisode': null, 'totalEpisodes': null, 'airing': null};
 
 			currentAnime.title = MALList[i].childNodes[1].firstChild.nodeValue;
-			console.log(currentAnime.title);
 			currentAnime.title_syn = (MALList[i].childNodes[2].firstChild) ? MALList[i].childNodes[2].firstChild.nodeValue : "";
 			currentAnime.id = MALList[i].childNodes[0].firstChild.nodeValue;
 			currentAnime.url = 'http://myanimelist.net/anime/' + MALList[i].childNodes[0].firstChild.nodeValue;
@@ -74,7 +78,7 @@ function getMALList(callback) {
 				animeCount++;
 			}
 			else
-				console.log('Not found on HorribleSubs: ' + currentAnime.title);
+				console.error('Not found on HorribleSubs: ' + currentAnime.title);
 		}
 		callback();
 	};
@@ -122,7 +126,7 @@ function getHummingbirdList(callback)
 				animeCount++;
 			}
 			else
-				console.log('Not found on HorribleSubs: ' + currentAnime.title);
+				console.error('Not found on HorribleSubs: ' + currentAnime.title);
 		}
 		callback();
 	};
@@ -147,6 +151,13 @@ function getHorribleTitle(anime)
 		}
 		if (horribleAnimeList.byName[title_syns[i].toLowerCase()]) {
 			title = horribleAnimeList.byName[title_syns[i].toLowerCase()].title;
+			break;
+		}
+	}
+	// Check similarity in title names
+	for (j = 0; (j < horribleAnimeList.byIndex.length && !title); j++){
+		if (similarity(horribleAnimeList.byIndex[j].title.toLowerCase(), anime.title.toLowerCase()) >= 0.55) {
+			title = horribleAnimeList.byIndex[j].title;
 			break;
 		}
 	}
@@ -195,50 +206,64 @@ function retrieveEpisodes(anime, epCount)
 {
 	var request = new XMLHttpRequest();
 	var episodeData;
-	request.onload = function()
-	{
-		var result = request.responseXML;
-		if (result){
-			var nyaaData = result.childNodes[0].childNodes[0];
-			var foundEpisode = false;
-			for (var i = anime.currentEpisode; 1; i++)
-			{
-				if (i == 0)
-					continue;
-				foundEpisode = false;
-				for (var j = 4; j < nyaaData.children.length + 1; j++)
-				{
-					var nyaaEpisode = nyaaData.childNodes[j];
-					var count = (i < 10) ? '0' + i.toString() : i;
-					var search = ' - ' + count;
-					if (nyaaEpisode)
-					{
-						if (nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
+	request.onreadystatechange = function ()
+		{
+			if (request.readyState == 4) {
+				if (request.status == 200) {
+					var result = request.responseXML;
+					if (result){
+						var nyaaData = result.childNodes[0].childNodes[0];
+						var foundEpisode = false;
+						for (var i = anime.currentEpisode; 1; i++)
 						{
-							episodeData = {episodeID: i, available: true, data: nyaaEpisode};
-							anime.episodes.push(episodeData);
-							foundEpisode = true;
-							break;
+							if (i == 0)
+								continue;
+							foundEpisode = false;
+							for (var j = 4; j < nyaaData.children.length + 1; j++)
+							{
+								var nyaaEpisode = nyaaData.childNodes[j];
+								var count = (i < 10) ? '0' + i.toString() : i;
+								var search = ' - ' + count;
+								if (nyaaEpisode)
+								{
+									if (nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
+									{
+										episodeData = {episodeID: i, available: true, data: nyaaEpisode};
+										anime.episodes.push(episodeData);
+										foundEpisode = true;
+										break;
+									}
+								}
+							}
+							if (!foundEpisode)
+							{
+								++retrievedAnimeCount;
+								episodeData = {episodeID: i, available: false};
+								anime.episodes.push(episodeData);
+								break;
+							}
+						}
+						var animeListLength = (settings.listSys == "MAL") ? animeList.byIndex.length + 1 : animeList.byIndex.length;
+						if (retrievedAnimeCount == animeListLength){
+							console.log('Displaying anime episodes...');
+							displayAnimes();
 						}
 					}
-				}
-				if (!foundEpisode)
-				{
-					++retrievedAnimeCount;
-					episodeData = {episodeID: i, available: false};
-					anime.episodes.push(episodeData);
-					break;
+				} else if (request.status == 400) {
+					console.error(request.response);
+					console.error('Nyaa get Torrent: Access unauthorized.');
+				} else if (request.status == 520) {
+					console.error('Nyaa get Torrent: 520 Trying again..');
+					retrieveEpisodes(anime, epCount);
+					return (0);
+				} else {
+					console.error(request.response);
+					console.error('Nyaa get Torrent: An unknown error was returned.');
 				}
 			}
-			var animeListLength = (settings.listSys == "MAL") ? animeList.byIndex.length + 1 : animeList.byIndex.length;
-			if (retrievedAnimeCount == animeListLength){
-				console.log('Displaying anime episodes...');
-				displayAnimes();
-			}
-		}
-	};
+		};
 
-	request.open("GET",  'https://www.nyaa.se/?page=rss&term=[HorribleSubs]' + anime.HorribleTitle + '[' + settings.quality + ']');
+	request.open("GET", encodeURI("https://www.nyaa.se/?page=rss&term=[HorribleSubs]" + anime.HorribleTitle + "[" + settings.quality + "]"));
 	request.send();
 }
 
@@ -440,9 +465,9 @@ function setMALEpisodeCount(anime, i, epCount)
 					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
 					setTimeout(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();}, 500);
 				} else if (req.status == 400) {
-					console.log('MAL Episode increment: There was an error processing the token.');
+					console.error('MAL Episode increment: There was an error processing the token.');
 				} else {
-					console.log('MAL Episode increment: Something else other than 200 was returned.');
+					console.error('MAL Episode increment: Something else other than 200 was returned.');
 				}
 			}
 		};
@@ -462,10 +487,10 @@ function setHummingbirdEpisodeCount(anime, i, epCount)
 					document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_content').className = " hideAnime";
 					setTimeout(function(){document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_section').remove();}, 500);
 				} else if (req.status == 401) {
-					console.log('Hummingbird Episode increment: Access unauthorized.');
+					console.error('Hummingbird Episode increment: Access unauthorized.');
 				} else {
-					console.log(this.response);
-					console.log('Hummingbird Episode increment: An unknown error was returned.');
+					console.error(this.response);
+					console.error('Hummingbird Episode increment: An unknown error was returned.');
 				}
 			}
 		};
@@ -620,7 +645,7 @@ function loginToMAL()
 {
 	loginTry++;
 	if (loginTry >= 10)
-		return (console.log('MAL login: Could not login after 10 attempt.'));
+		return (console.error('MAL login: Could not login after 10 attempt.'));
 	var csrf_token_req = new XMLHttpRequest();
 	csrf_token_req.onload = function()
 	{
@@ -643,10 +668,10 @@ function loginToMAL()
 					if (login_req.status == 200) {
 						console.log('MAL login: Succesfully logged in.');
 					} else if (login_req.status == 400) {
-						console.log('MAL login: There was an error processing the token. Retry in 2sec...');
+						console.error('MAL login: There was an error processing the token. Retry in 2sec...');
 						loginToMAL();
 					} else {
-						console.log('MAL login: An unknown error was returned. Retry in 2sec...');
+						console.error('MAL login: An unknown error was returned. Retry in 2sec...');
 						loginToMAL();
 					}
 				}
@@ -658,7 +683,7 @@ function loginToHummingbird()
 {
 	loginTry++;
 	if (loginTry >= 10)
-		return (console.log('Hummingbird login: Could not login after 10 attempt.'));
+		return (console.error('Hummingbird login: Could not login after 10 attempt.'));
 	var login_req = new XMLHttpRequest();
 	login_req.open("POST", 'http://hummingbird.me/api/v1/users/authenticate');
 	login_req.setRequestHeader("Content-Type", 'application/x-www-form-urlencoded; charset=UTF-8');
@@ -670,14 +695,55 @@ function loginToHummingbird()
 					settings.token = JSON.parse(login_req.response);
 					console.log('Hummingbird login: Succesfully logged in.');
 				} else if (login_req.status == 401) {
-					console.log(login_req.response);
-					console.log('Hummingbird login: Access unauthorized. Retry in 2sec...');
+					console.error(login_req.response);
+					console.error('Hummingbird login: Access unauthorized. Retry in 2sec...');
 					loginToHummingbird();
 				} else {
-					console.log(login_req.response);
-					console.log('Hummingbird login: An unknown error was returned. Retry in 2sec...');
+					console.error(login_req.response);
+					console.error('Hummingbird login: An unknown error was returned. Retry in 2sec...');
 					loginToHummingbird();
 				}
 			}
 		};
+}
+
+function similarity(s1, s2) {
+  var longer = s1;
+  var shorter = s2;
+  if (s1.length < s2.length) {
+    longer = s2;
+    shorter = s1;
+  }
+  var longerLength = longer.length;
+  if (longerLength == 0) {
+    return 1.0;
+  }
+  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+}
+
+function editDistance(s1, s2) {
+  s1 = s1.toLowerCase();
+  s2 = s2.toLowerCase();
+
+  var costs = new Array();
+  for (var i = 0; i <= s1.length; i++) {
+    var lastValue = i;
+    for (var j = 0; j <= s2.length; j++) {
+      if (i == 0)
+        costs[j] = j;
+      else {
+        if (j > 0) {
+          var newValue = costs[j - 1];
+          if (s1.charAt(i - 1) != s2.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue),
+              costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0)
+      costs[s2.length] = lastValue;
+  }
+  return costs[s2.length];
 }
