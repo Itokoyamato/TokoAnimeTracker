@@ -6,7 +6,9 @@ var HorribleEpisodeCountFix = {
 	'bungou stray dogs': 12,
 	'rewrite': 13,
 	'nanbaka': 13,
-	'tales of zestiria the x': 13
+	'tales of zestiria the x': 13,
+	"boku no hero academia": 13,
+	"shingeki no kyojin": 25
 };
 
 var date = new Date();
@@ -292,7 +294,7 @@ function retrieveHorribleSubsSchedule()
 					day = 6 - (day-7);
 				if (day > 6)
 					day = 0;
-				var animeData = {title: daySchedule[j].firstChild.innerHTML, scheduleDay: day, scheduleTime: fixedTime[0] + ':' + fixedTime[1]};
+				var animeData = {title: daySchedule[j].firstChild.innerText.replace(/<(?:.|\n)*?>/gm, ''), scheduleDay: day, scheduleTime: fixedTime[0] + ':' + fixedTime[1]};
 				horribleAnimeList.byIndex[animeCount] = animeData;
 				horribleAnimeList.byName[animeData.title.toLowerCase()] = animeData;
 				animeCount++;
