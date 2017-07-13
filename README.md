@@ -1,5 +1,5 @@
 # TokoAnimeTracker
-An extension that retrieves your watching list from MyAnimeList/Hummingbird and displays your upcoming/available episodes on horribleSubs, allowing you to download the torrent with just a click.
+An extension that retrieves your watching list from MyAnimeList/Hummingbird and displays your upcoming/available episodes on horribleSubs, allowing you to download the torrent with just a click and mark it as watched in your list.
 
 # Changelog
 + ~~Compatibility with firefox~~
