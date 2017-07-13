@@ -214,7 +214,7 @@ function retrieveEpisodes(anime, epCount)
 				if (request.status == 200) {
 					var result = request.responseXML;
 					if (result){
-						var nyaaData = result.childNodes[0].childNodes[0];
+						var nyaaData = result.childNodes[0].childNodes[1];
 						var foundEpisode = false;
 						for (var i = anime.currentEpisode; 1; i++)
 						{
@@ -223,12 +223,16 @@ function retrieveEpisodes(anime, epCount)
 							foundEpisode = false;
 							for (var j = 4; j < nyaaData.children.length + 1; j++)
 							{
+								if (nyaaData.childNodes[j].nodeType != 1)
+									continue;
+								if (nyaaData.childNodes[j].tagName != "item")
+									continue;
 								var nyaaEpisode = nyaaData.childNodes[j];
 								var count = (i < 10) ? '0' + i.toString() : i;
 								var search = ' - ' + count;
 								if (nyaaEpisode)
 								{
-									if (nyaaEpisode.childNodes[0].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
+									if (nyaaEpisode.childNodes[1].firstChild.nodeValue.toLowerCase().includes(search.toLowerCase()))
 									{
 										episodeData = {episodeID: i, available: true, data: nyaaEpisode};
 										anime.episodes.push(episodeData);
@@ -265,7 +269,7 @@ function retrieveEpisodes(anime, epCount)
 			}
 		};
 
-	request.open("GET", encodeURI("https://www.nyaa.se/?page=rss&term=[HorribleSubs]" + anime.HorribleTitle + "[" + settings.quality + "]"));
+	request.open("GET", encodeURI("https://nyaa.si/?page=rss&term=[HorribleSubs]" + anime.HorribleTitle + "[" + settings.quality + "]"));
 	request.send();
 }
 
@@ -377,7 +381,7 @@ function displayEpisodes(anime)
 				document.getElementById(anime.id + '_' + anime.episodes[i].episodeID + '_download').addEventListener('click', (function(anime, i)
 					{
 						return function() {
-							var downloadURL = anime.episodes[i].data.childNodes[2].firstChild.nodeValue + '&magnet=1';
+							var downloadURL = anime.episodes[i].data.getElementsByTagName("guid")[0].textContent + '/magnet';
 							chrome.tabs.create({url: downloadURL, active: false});
 							chrome.tabs.query({'url': downloadURL}, function(tab){setTimeout(function(){chrome.tabs.remove(tab[0].id);}, 700);});
 						};
