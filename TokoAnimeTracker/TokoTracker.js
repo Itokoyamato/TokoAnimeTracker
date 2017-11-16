@@ -8,7 +8,8 @@ var HorribleEpisodeCountFix = {
 	'nanbaka': 13,
 	'tales of zestiria the x': 13,
 	"boku no hero academia": 13,
-	"shingeki no kyojin": 25
+	"shingeki no kyojin": 25,
+	"3-gatsu no lion": 22
 };
 
 var date = new Date();
@@ -66,7 +67,7 @@ function getMALList(callback) {
 
 			var horribleTitle = getHorribleTitle(currentAnime);
 			if (horribleTitle){
-				console.log('Found on horriblesubs: ' + horribleTitle);
+				console.log('Found on horriblesubs: ' + horribleTitle + '(' + currentAnime.title + ')');
 				if (HorribleEpisodeCountFix[horribleTitle.toLowerCase()]){
 					currentAnime.currentEpisode = parseInt(currentAnime.currentEpisode) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
 					currentAnime.totalEpisodes = parseInt(currentAnime.totalEpisodes) + HorribleEpisodeCountFix[horribleTitle.toLowerCase()];
@@ -158,7 +159,7 @@ function getHorribleTitle(anime)
 	}
 	// Check similarity in title names
 	for (j = 0; (j < horribleAnimeList.byIndex.length && !title); j++){
-		if (similarity(horribleAnimeList.byIndex[j].title.toLowerCase(), anime.title.toLowerCase()) >= 0.55) {
+		if (similarity(horribleAnimeList.byIndex[j].title.toLowerCase(), anime.title.toLowerCase()) >= 0.65) {
 			title = horribleAnimeList.byIndex[j].title;
 			break;
 		}
@@ -191,15 +192,15 @@ function getHorribleTitle(anime)
 		}
 	}
 	// Check if first word of synonyms is found in a title on horriblesubs
-	for (i = 0; (i < title_syns.length && !title); i++) {
-		var title_syn_split = title_syns[i].split(' ');
-		for (j = 0; (j < horribleAnimeList.byIndex.length && !title); j++){
-			if (title_syn_split[0] !== '' && horribleAnimeList.byIndex[j].title.toLowerCase().includes(title_syn_split[0].toLowerCase())) {
-				title = horribleAnimeList.byIndex[j].title;
-				break;
-			}
-		}
-	}
+	// for (i = 0; (i < title_syns.length && !title); i++) {
+	// 	var title_syn_split = title_syns[i].split(' ');
+	// 	for (j = 0; (j < horribleAnimeList.byIndex.length && !title); j++){
+	// 		if (title_syn_split[0] !== '' && horribleAnimeList.byIndex[j].title.toLowerCase().includes(title_syn_split[0].toLowerCase())) {
+	// 			title = horribleAnimeList.byIndex[j].title;
+	// 			break;
+	// 		}
+	// 	}
+	// }
 	return (title);
 }
 
@@ -221,13 +222,10 @@ function retrieveEpisodes(anime, epCount)
 							if (i == 0)
 								continue;
 							foundEpisode = false;
-							for (var j = 4; j < nyaaData.children.length + 1; j++)
+							var items = nyaaData.getElementsByTagName("item");
+							for (var j = 0; j <= items.length; j++)
 							{
-								if (nyaaData.childNodes[j].nodeType != 1)
-									continue;
-								if (nyaaData.childNodes[j].tagName != "item")
-									continue;
-								var nyaaEpisode = nyaaData.childNodes[j];
+								var nyaaEpisode = items[j];
 								var count = (i < 10) ? '0' + i.toString() : i;
 								var search = ' - ' + count;
 								if (nyaaEpisode)
@@ -258,13 +256,16 @@ function retrieveEpisodes(anime, epCount)
 				} else if (request.status == 400) {
 					console.error(request.response);
 					console.error('Nyaa get Torrent: Access unauthorized.');
+					++retrievedAnimeCount;
 				} else if (request.status == 520) {
 					console.error('Nyaa get Torrent: 520 Trying again..');
 					retrieveEpisodes(anime, epCount);
+					++retrievedAnimeCount;
 					return (0);
 				} else {
 					console.error(request.response);
 					console.error('Nyaa get Torrent: An unknown error was returned.');
+					++retrievedAnimeCount;
 				}
 			}
 		};
@@ -348,7 +349,7 @@ function displayEpisodes(anime)
 		return a.episodeID - b.episodeID;
 	});
 	for (var i = 0; i < anime.episodes.length; i++){
-		if (anime.episodes[i].episodeID <= anime.currentEpisode)
+		if (parseInt(anime.episodes[i].episodeID) <= parseInt(anime.currentEpisode))
 			continue;
 		var downloadOrTime = '<div class="releaseTime"><p class="releaseTime">' + anime.HorribleScheduleTime + '</p></div>';
 		var watchedButton = '';
